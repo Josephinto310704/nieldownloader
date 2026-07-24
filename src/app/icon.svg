@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Left stem and diagonal -->
+  <path d="M6 20 V4 L18 18" />
+  <!-- Right stem -->
+  <path d="M18 4 V20" />
+  <!-- Arrow head at the bottom of right stem -->
+  <path d="M14 16 L18 20 L22 16" />
+</svg>
