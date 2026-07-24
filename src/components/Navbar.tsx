@@ -8,7 +8,8 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md transition-all">
+    <>
+      <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md transition-all">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
           <Link href="/" className="text-xl font-bold tracking-tight text-indigo-700 font-poppins">
@@ -40,68 +41,66 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+      </nav>
 
-      {/* Dropdown Menu */}
+      {/* Overlay */}
       {isMenuOpen && (
-        <div className="absolute left-0 right-0 md:left-auto md:right-4 top-14 w-full md:w-80 z-50 animate-in slide-in-from-top-2 fade-in duration-200 md:mt-2">
-          <div className="bg-white border-t md:border border-slate-200 shadow-xl rounded-b-2xl md:rounded-2xl flex flex-col space-y-1 p-3">
-            
-            {/* Mobile Only Primary Links */}
-            <div className="md:hidden flex flex-col space-y-1 mb-2 pb-2 border-b border-slate-100">
-              <Link 
-                href="#fitur" 
-                onClick={() => setIsMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-base font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-              >
-                Fitur
-              </Link>
-              <Link 
-                href="#cara-pakai" 
-                onClick={() => setIsMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-base font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-              >
-                Cara Pakai
-              </Link>
-            </div>
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
 
-            {/* Other Websites Section */}
-            <div className="px-3 pt-2 pb-2">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Jaringan Kami</p>
-            </div>
-            
-            <a 
-              href="#" 
-              target="_blank"
+      {/* Side Drawer */}
+      <div className={`fixed top-0 right-0 h-screen w-full sm:w-[320px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${
+        isMenuOpen ? "translate-x-0" : "translate-x-full"
+      }`}>
+        <div className="flex items-center justify-end p-6">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen(false)}
+            className="text-slate-400 hover:text-slate-700 transition-colors"
+          >
+            <Icon icon="lucide:x" width="24" height="24" />
+          </button>
+        </div>
+        
+        <div className="px-6 flex flex-col flex-1 pb-6">
+          {/* Mobile Only Primary Links */}
+          <div className="md:hidden flex flex-col space-y-4 mb-6 pb-6 border-b border-slate-100">
+            <Link 
+              href="#fitur" 
               onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+              className="text-base font-semibold text-slate-700 hover:text-indigo-600 transition-colors"
             >
-              <div className="p-2 bg-slate-100 text-slate-500 rounded-lg group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                <Icon icon="lucide:globe" width="18" />
-              </div>
-              <div className="flex flex-col">
-                <span>Web Converter</span>
-                <span className="text-xs font-normal text-slate-500 group-hover:text-indigo-400">Ubah format file apa saja</span>
-              </div>
-            </a>
-            
-            <a 
-              href="#" 
-              target="_blank"
+              Fitur
+            </Link>
+            <Link 
+              href="#cara-pakai" 
               onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+              className="text-base font-semibold text-slate-700 hover:text-indigo-600 transition-colors"
             >
-              <div className="p-2 bg-slate-100 text-slate-500 rounded-lg group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                <Icon icon="lucide:layout-template" width="18" />
-              </div>
-              <div className="flex flex-col">
-                <span>Portofolio Niel</span>
-                <span className="text-xs font-normal text-slate-500 group-hover:text-indigo-400">Lihat karya terbaik kami</span>
-              </div>
-            </a>
+              Cara Pakai
+            </Link>
+          </div>
 
+          {/* Produk Lain Section */}
+          <div className="flex flex-col space-y-4">
+            <span className="font-semibold text-slate-800">Produk lain</span>
+            <a 
+              href="https://nieldoc.vercel.app/" 
+              onClick={() => setIsMenuOpen(false)}
+              className="flex flex-col justify-center px-4 py-3 bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-colors group"
+            >
+              <span className="font-bold text-base font-poppins text-slate-900 transition-colors">
+                <span>niel</span>
+                <span className="text-[#4ade80]">doc</span>
+              </span>
+              <span className="text-xs text-slate-500 mt-0.5">ubah dokumenmu</span>
+            </a>
           </div>
         </div>
-      )}
-    </nav>
+      </div>
+    </>
   );
 }

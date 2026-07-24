@@ -42,7 +42,7 @@ export default function Hero() {
   };
 
   return (
-    <div className="relative isolate px-6 lg:px-8 min-h-[calc(100vh-3.5rem)] flex flex-col justify-center">
+    <div className="relative isolate px-6 lg:px-8 min-h-[calc(100vh-3.5rem)] flex flex-col justify-center pb-24 sm:pb-0">
       <div className="mx-auto max-w-4xl py-4 sm:py-6 lg:py-8 w-full">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-800 to-indigo-500 pb-2 leading-tight font-poppins">
