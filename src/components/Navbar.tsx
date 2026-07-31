@@ -18,16 +18,6 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-8">
-          {/* Desktop Menu */}
-          <div className="hidden md:flex md:gap-x-8">
-            <Link href="#fitur" className="text-sm font-semibold leading-6 text-slate-700 hover:text-indigo-600 transition-colors">
-              Fitur
-            </Link>
-            <Link href="#cara-pakai" className="text-sm font-semibold leading-6 text-slate-700 hover:text-indigo-600 transition-colors">
-              Cara Pakai
-            </Link>
-          </div>
-
           {/* Hamburger Icon (Always Visible) */}
           <div className="flex">
             <button
@@ -66,24 +56,6 @@ export default function Navbar() {
         </div>
         
         <div className="px-6 flex flex-col flex-1 pb-6">
-          {/* Mobile Only Primary Links */}
-          <div className="md:hidden flex flex-col space-y-4 mb-6 pb-6 border-b border-slate-100">
-            <Link 
-              href="#fitur" 
-              onClick={() => setIsMenuOpen(false)}
-              className="text-base font-semibold text-slate-700 hover:text-indigo-600 transition-colors"
-            >
-              Fitur
-            </Link>
-            <Link 
-              href="#cara-pakai" 
-              onClick={() => setIsMenuOpen(false)}
-              className="text-base font-semibold text-slate-700 hover:text-indigo-600 transition-colors"
-            >
-              Cara Pakai
-            </Link>
-          </div>
-
           {/* Produk Lain Section */}
           <div className="flex flex-col space-y-4">
             <span className="font-semibold text-slate-800">Produk lain</span>
