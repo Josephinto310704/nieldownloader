@@ -1,8 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Left stem and diagonal -->
-  <path d="M6 20 V4 L18 18" />
-  <!-- Right stem -->
-  <path d="M18 4 V20" />
-  <!-- Arrow head at the bottom of right stem -->
-  <path d="M14 16 L18 20 L22 16" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="32" height="32" rx="9" fill="url(#bgGrad)" />
+  <!-- White letter 'N' centered -->
+  <path d="M9.5 22.5V9.5l13 13V9.5" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
