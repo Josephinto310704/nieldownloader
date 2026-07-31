@@ -130,21 +130,6 @@ export default function Hero() {
               <ResultCard data={result} />
             )}
           </div>
-
-          {/* Platform Toggles / Indicators */}
-          <div className="mt-6">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Mendukung Penuh</p>
-            <div className="flex justify-center gap-4">
-              <div className="flex items-center gap-2 px-5 py-2 rounded-full border border-slate-800 bg-slate-800 text-white select-none">
-                <Icon icon="lucide:youtube" width="18" height="18" />
-                YouTube
-              </div>
-              <div className="flex items-center gap-2 px-5 py-2 rounded-full border border-slate-800 bg-slate-800 text-white select-none">
-                <Icon icon="ic:outline-tiktok" width="18" height="18" />
-                TikTok
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
