@@ -1,5 +1,5 @@
-# Gunakan Node.js LTS (slim Debian base)
-FROM node:20-bullseye-slim
+# Gunakan Node.js 20 dengan base Debian 12 (Bookworm) yang menyediakan Python 3.11+
+FROM node:20-bookworm-slim
 
 # Instal Python 3, pip, ffmpeg, dan curl
 RUN apt-get update && apt-get install -y \
