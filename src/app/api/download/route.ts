@@ -141,6 +141,7 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Download API Error:', error);
-    return NextResponse.json({ success: false, error: 'Terjadi kesalahan pada server atau tautan tidak valid.' }, { status: 500 });
+    const detail = error.message || String(error);
+    return NextResponse.json({ success: false, error: `Detail Error: ${detail}` }, { status: 500 });
   }
 }
