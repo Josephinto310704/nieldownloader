@@ -146,51 +146,48 @@ export async function POST(request: Request) {
       });
       
     } else if (isInstagram) {
-      const match = url.match(/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
-      if (!match) {
-        return NextResponse.json({ success: false, error: 'Tautan Instagram tidak valid atau media diprivate.' }, { status: 400 });
-      }
-      const shortcode = match[1];
+      const cleanUrl = url.split('?')[0];
 
       try {
-        const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
-        const res = await axios.get(embedUrl, {
+        const response = await axios.get('https://instagram-post-reels-stories-downloader-api.p.rapidapi.com/instagram/', {
+          params: { url: cleanUrl },
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9'
+            'x-rapidapi-key': 'e67e20d88fmshbcee78df6ab9608p16b613jsn8e615f583f81',
+            'x-rapidapi-host': 'instagram-post-reels-stories-downloader-api.p.rapidapi.com'
           },
-          timeout: 8000
+          timeout: 10000
         });
 
-        const html = res.data;
-        const media: any[] = [];
+        const data = response.data;
+        if (data && data.status && Array.isArray(data.result) && data.result.length > 0) {
+          const media: any[] = [];
+          data.result.forEach((item: any, idx: number) => {
+            const isVideo = item.type?.includes('video') || item.url?.includes('.mp4');
+            const mediaType = isVideo ? 'video' : 'image';
+            const label = data.result.length > 1
+              ? `Slide ${idx + 1} (${isVideo ? 'Video' : 'Foto'})`
+              : (isVideo ? 'Reel / Video HD' : 'Foto HD');
 
-        const mp4Matches = [...html.matchAll(/video_url\\":\\"([^\\"]+)\\"/gi)].map(m => m[1].replace(/\\u0026/g, '&').replace(/\\\//g, '/'));
-        const imgMatches = [...html.matchAll(/class="EmbeddedMediaImage"[^>]*src="([^"]+)"/gi)].map(m => m[1].replace(/&amp;/g, '&'));
-
-        if (mp4Matches.length > 0) {
-          media.push({ type: 'video', quality: 'Reel / Video HD', url: mp4Matches[0] });
-        } else if (imgMatches.length > 0) {
-          imgMatches.forEach((imgUrl, idx) => {
-            media.push({ type: 'image', quality: imgMatches.length > 1 ? `Foto Slide ${idx + 1}` : 'Foto HD', url: imgUrl });
+            media.push({
+              type: mediaType,
+              quality: label,
+              url: item.url,
+              size: item.size ? formatBytes(parseInt(item.size)) : ''
+            });
           });
-        }
 
-        const captionMatch = html.match(/class="Caption"[^>]*>([\s\S]*?)<\/div>/i);
-        const title = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 100) : 'Media Instagram';
-        const thumbnail = imgMatches[0] || '';
+          const thumbnail = data.result[0]?.thumb || data.result[0]?.url || '';
 
-        if (media.length > 0) {
           return NextResponse.json({
             success: true,
             platform: 'instagram',
-            title,
+            title: 'Media Instagram',
             thumbnail,
             media
           });
         }
-      } catch (e) {
-        console.error('Embed extraction fallback:', e);
+      } catch (e: any) {
+        console.error('RapidAPI Instagram extraction error:', e.message);
       }
 
       return NextResponse.json({
