@@ -46,7 +46,7 @@ export default function Hero() {
       <div className="mx-auto max-w-4xl py-4 sm:py-6 lg:py-8 w-full">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-800 to-indigo-500 pb-2 leading-tight font-poppins">
-            nieldownloader: Unduh Video TikTok & YouTube Secara Instan
+            Unduh Video TikTok & YouTube Secara Instan
           </h1>
           <p className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 max-w-2xl mx-auto">
             Layanan terbaik untuk mengunduh video favorit anda dengan kualitas terbaik
