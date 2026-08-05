@@ -46,7 +46,7 @@ export default function Hero() {
       <div className="mx-auto max-w-4xl py-4 sm:py-6 lg:py-8 w-full">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-800 to-indigo-500 pb-2 leading-tight font-poppins">
-            Unduh Video TikTok & YouTube Secara Instan
+            Unduh Video TikTok, YouTube & Instagram Secara Instan
           </h1>
           <p className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 max-w-2xl mx-auto">
             Layanan terbaik untuk mengunduh video favorit anda dengan kualitas terbaik
@@ -62,7 +62,7 @@ export default function Hero() {
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="Paste tautan video di sini..."
+                  placeholder="Tempel tautan TikTok, YouTube, atau Instagram di sini..."
                   className="block w-full rounded-xl border-0 py-3 sm:py-4 pl-10 sm:pl-12 pr-[90px] sm:pr-[180px] text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm sm:text-lg sm:leading-6 bg-white transition-all"
                   required
                 />

@@ -24,6 +24,7 @@ export async function POST(request: Request) {
 
     const isTikTok = url.includes('tiktok.com') || url.includes('vt.tiktok.com');
     const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+    const isInstagram = url.includes('instagram.com') || url.includes('instagr.am');
 
     if (isTikTok) {
       // Fetch from TikWM API
@@ -144,8 +145,61 @@ export async function POST(request: Request) {
         media: media
       });
       
+    } else if (isInstagram) {
+      const match = url.match(/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+      if (!match) {
+        return NextResponse.json({ success: false, error: 'Tautan Instagram tidak valid atau media diprivate.' }, { status: 400 });
+      }
+      const shortcode = match[1];
+
+      try {
+        const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
+        const res = await axios.get(embedUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9'
+          },
+          timeout: 8000
+        });
+
+        const html = res.data;
+        const media: any[] = [];
+
+        const mp4Matches = [...html.matchAll(/video_url\\":\\"([^\\"]+)\\"/gi)].map(m => m[1].replace(/\\u0026/g, '&').replace(/\\\//g, '/'));
+        const imgMatches = [...html.matchAll(/class="EmbeddedMediaImage"[^>]*src="([^"]+)"/gi)].map(m => m[1].replace(/&amp;/g, '&'));
+
+        if (mp4Matches.length > 0) {
+          media.push({ type: 'video', quality: 'Reel / Video HD', url: mp4Matches[0] });
+        } else if (imgMatches.length > 0) {
+          imgMatches.forEach((imgUrl, idx) => {
+            media.push({ type: 'image', quality: imgMatches.length > 1 ? `Foto Slide ${idx + 1}` : 'Foto HD', url: imgUrl });
+          });
+        }
+
+        const captionMatch = html.match(/class="Caption"[^>]*>([\s\S]*?)<\/div>/i);
+        const title = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 100) : 'Media Instagram';
+        const thumbnail = imgMatches[0] || '';
+
+        if (media.length > 0) {
+          return NextResponse.json({
+            success: true,
+            platform: 'instagram',
+            title,
+            thumbnail,
+            media
+          });
+        }
+      } catch (e) {
+        console.error('Embed extraction fallback:', e);
+      }
+
+      return NextResponse.json({
+        success: false,
+        error: 'Gagal mengekstrak media Instagram. Tautan mungkin diprivate atau tidak valid.'
+      }, { status: 500 });
+
     } else {
-      return NextResponse.json({ success: false, error: 'Platform tidak didukung. Harap masukkan tautan TikTok atau YouTube.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Platform tidak didukung. Harap masukkan tautan TikTok, YouTube, atau Instagram.' }, { status: 400 });
     }
 
   } catch (error: any) {
