@@ -74,7 +74,8 @@ export async function POST(request: Request) {
         noCheckCertificates: true,
         noWarnings: true,
         preferFreeFormats: true,
-        addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0']
+        addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0'],
+        extractorArgs: 'youtube:player_client=android,web'
       });
 
       const media: any[] = [];
@@ -142,6 +143,6 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Download API Error:', error);
     const detail = error.message || String(error);
-    return NextResponse.json({ success: false, error: `Detail Error: ${detail}` }, { status: 500 });
+    return NextResponse.json({ success: false, error: detail.includes('Sign in') ? 'YouTube memblokir permintaan ini. Harap coba lagi.' : `Terjadi kesalahan: ${detail}` }, { status: 500 });
   }
 }
