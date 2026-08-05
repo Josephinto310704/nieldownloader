@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       });
 
       const data = response.data;
-      if (!data || data.errorId) {
+      if (!data || (data.errorId && data.errorId !== 'Success')) {
         return NextResponse.json({ success: false, error: 'Gagal mendapatkan informasi video dari YouTube.' }, { status: 500 });
       }
 
