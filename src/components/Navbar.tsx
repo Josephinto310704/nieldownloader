@@ -12,8 +12,9 @@ export default function Navbar() {
       <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md transition-all">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          <Link href="/" className="text-xl font-bold tracking-tight text-indigo-700 font-poppins">
-            nieldownloader
+          <Link href="/" className="text-xl font-bold tracking-tight font-poppins">
+            <span className="text-black">niel</span>
+            <span className="text-indigo-700">downloader</span>
           </Link>
         </div>
 
@@ -64,9 +65,9 @@ export default function Navbar() {
               onClick={() => setIsMenuOpen(false)}
               className="flex flex-col justify-center px-4 py-3 bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-colors group"
             >
-              <span className="font-bold text-base font-poppins text-slate-900 transition-colors">
+              <span className="font-bold text-base font-poppins text-black transition-colors">
                 <span>niel</span>
-                <span className="text-[#4ade80]">doc</span>
+                <span className="text-[#fca311]">doc</span>
               </span>
               <span className="text-xs text-slate-500 mt-0.5">ubah dokumenmu</span>
             </a>
