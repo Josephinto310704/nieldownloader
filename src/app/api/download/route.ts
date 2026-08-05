@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import ytdl from '@distube/ytdl-core';
 
 function formatBytes(bytes: number) {
   if (!bytes || bytes === 0) return '';
@@ -8,6 +7,11 @@ function formatBytes(bytes: number) {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function extractYouTubeVideoId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|watch\?.+&v=))([\w-]{11})/);
+  return match ? match[1] : null;
 }
 
 export async function POST(request: Request) {
@@ -68,53 +72,65 @@ export async function POST(request: Request) {
       }
 
     } else if (isYouTube) {
-      // Fetch YouTube info using @distube/ytdl-core
-      const info = await ytdl.getInfo(url);
-      const videoDetails = info.videoDetails;
-      const formats = info.formats || [];
+      const videoId = extractYouTubeVideoId(url);
+      if (!videoId) {
+        return NextResponse.json({ success: false, error: 'ID Video YouTube tidak ditemukan dalam tautan.' }, { status: 400 });
+      }
+
+      const response = await axios.request({
+        method: 'GET',
+        url: 'https://youtube-media-downloader.p.rapidapi.com/v2/video/details',
+        params: { videoId },
+        headers: {
+          'x-rapidapi-key': 'e67e20d88fmshbcee78df6ab9608p16b613jsn8e615f583f81',
+          'x-rapidapi-host': 'youtube-media-downloader.p.rapidapi.com'
+        }
+      });
+
+      const data = response.data;
+      if (!data || data.errorId) {
+        return NextResponse.json({ success: false, error: 'Gagal mendapatkan informasi video dari YouTube.' }, { status: 500 });
+      }
+
+      const title = data.title || 'Video YouTube';
+      const thumbnails = data.thumbnails || [];
+      const bestThumbnail = thumbnails[thumbnails.length - 1]?.url || '';
+
+      const rawVideos = data.videos?.items || data.videos || [];
+      const rawAudios = data.audios?.items || data.audios || [];
 
       const media: any[] = [];
-      
-      // 1. Combined (video + audio)
-      const combinedFormats = formats.filter((f: any) => f.hasVideo && f.hasAudio);
-      
-      // 2. Video only
-      const videoOnlyFormats = formats.filter((f: any) => f.hasVideo && !f.hasAudio);
-      
-      const allVideoFormats = [...combinedFormats, ...videoOnlyFormats];
+      const seenQualities = new Set();
 
-      if (allVideoFormats.length > 0) {
-        const seenQualities = new Set();
-        for (const f of allVideoFormats) {
-          const qualityLabel = f.qualityLabel || (f.height ? `${f.height}p` : '');
-          if (qualityLabel && !seenQualities.has(qualityLabel)) {
-            seenQualities.add(qualityLabel);
-            const hasAudio = f.hasAudio;
-            const label = `${qualityLabel}${hasAudio ? '' : ' (Tanpa Suara)'}`;
-            const sizeStr = formatBytes(parseInt((f as any).contentLength || '0'));
-            media.push({ type: 'video', quality: label, url: f.url, size: sizeStr });
-          }
-          if (media.length >= 8) break;
+      for (const v of rawVideos) {
+        const q = v.quality || (v.height ? `${v.height}p` : '');
+        if (q && !seenQualities.has(q)) {
+          seenQualities.add(q);
+          const label = `${q}${v.hasAudio ? '' : ' (Tanpa Suara)'}`;
+          media.push({
+            type: 'video',
+            quality: label,
+            url: v.url,
+            size: v.sizeText || formatBytes(v.size || 0)
+          });
         }
+        if (media.length >= 8) break;
       }
 
-      // Audio only
-      const audioFormats = formats.filter((f: any) => !f.hasVideo && f.hasAudio);
-      if (audioFormats.length > 0) {
-        const bestAudio = audioFormats.reduce((prev: any, current: any) => {
-          return (prev.audioBitrate || 0) > (current.audioBitrate || 0) ? prev : current;
+      if (rawAudios.length > 0) {
+        const bestAudio = rawAudios[0];
+        media.push({
+          type: 'audio',
+          quality: `${bestAudio.audioBitrate || 'MP3'}`,
+          url: bestAudio.url,
+          size: bestAudio.sizeText || formatBytes(bestAudio.size || 0)
         });
-        const sizeStr = formatBytes(parseInt((bestAudio as any).contentLength || '0'));
-        media.push({ type: 'audio', quality: `${bestAudio.audioBitrate || 128}kbps`, url: bestAudio.url, size: sizeStr });
       }
-
-      const thumbnails = videoDetails.thumbnails || [];
-      const bestThumbnail = thumbnails[thumbnails.length - 1]?.url || '';
 
       return NextResponse.json({
         success: true,
         platform: 'youtube',
-        title: videoDetails.title || 'Video YouTube',
+        title: title,
         thumbnail: bestThumbnail,
         media: media
       });
@@ -125,7 +141,7 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Download API Error:', error);
-    const detail = error.message || String(error);
+    const detail = error.response?.data?.message || error.message || String(error);
     return NextResponse.json({ success: false, error: `Gagal mengekstrak video: ${detail}` }, { status: 500 });
   }
 }
