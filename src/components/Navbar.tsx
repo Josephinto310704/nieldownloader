@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 
@@ -12,10 +11,6 @@ export default function Navbar() {
       <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md transition-all">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          <Link href="/" className="text-xl font-bold tracking-tight font-poppins">
-            <span className="text-black">niel</span>
-            <span className="text-indigo-700">downloader</span>
-          </Link>
         </div>
 
         <div className="flex items-center gap-2 md:gap-8">
