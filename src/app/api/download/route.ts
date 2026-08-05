@@ -99,13 +99,22 @@ export async function POST(request: Request) {
       const rawVideos = data.videos?.items || data.videos || [];
       const rawAudios = data.audios?.items || data.audios || [];
 
+      // Urutkan: Format yang ADA SUARA (hasAudio: true) didahulukan ke paling atas
+      rawVideos.sort((a: any, b: any) => {
+        const aAudio = a.hasAudio ? 1 : 0;
+        const bAudio = b.hasAudio ? 1 : 0;
+        if (bAudio !== aAudio) return bAudio - aAudio;
+        return (b.height || 0) - (a.height || 0);
+      });
+
       const media: any[] = [];
       const seenQualities = new Set();
 
       for (const v of rawVideos) {
         const q = v.quality || (v.height ? `${v.height}p` : '');
-        if (q && !seenQualities.has(q)) {
-          seenQualities.add(q);
+        const labelKey = `${q}-${v.hasAudio ? 'audio' : 'noaudio'}`;
+        if (q && !seenQualities.has(labelKey)) {
+          seenQualities.add(labelKey);
           const label = `${q}${v.hasAudio ? '' : ' (Tanpa Suara)'}`;
           media.push({
             type: 'video',
