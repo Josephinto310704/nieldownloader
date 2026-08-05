@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import youtubedl from 'youtube-dl-exec';
+import ytdl from '@distube/ytdl-core';
 
 function formatBytes(bytes: number) {
   if (!bytes || bytes === 0) return '';
@@ -68,71 +68,54 @@ export async function POST(request: Request) {
       }
 
     } else if (isYouTube) {
-      // Execute youtube-dl
-      const ytData: any = await youtubedl(url, {
-        dumpSingleJson: true,
-        noCheckCertificates: true,
-        noWarnings: true,
-        preferFreeFormats: true,
-        addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0'],
-        extractorArgs: 'youtube:player_client=android,web'
-      });
+      // Fetch YouTube info using @distube/ytdl-core
+      const info = await ytdl.getInfo(url);
+      const videoDetails = info.videoDetails;
+      const formats = info.formats || [];
 
       const media: any[] = [];
-      const formats = ytData.formats || [];
       
-      // 1. Ambil format yang memiliki video DAN audio (Combined)
-      const combinedFormats = formats.filter((f: any) => f.vcodec !== 'none' && f.acodec !== 'none' && (f.ext === 'mp4' || f.ext === '3gp'));
+      // 1. Combined (video + audio)
+      const combinedFormats = formats.filter((f: any) => f.hasVideo && f.hasAudio);
       
-      // 2. Ambil format video-only untuk semua resolusi (akan dilabeli Tanpa Suara nanti jika yang combined tidak ada)
-      const videoOnlyFormats = formats.filter((f: any) => f.vcodec !== 'none' && f.acodec === 'none' && f.ext === 'mp4');
+      // 2. Video only
+      const videoOnlyFormats = formats.filter((f: any) => f.hasVideo && !f.hasAudio);
       
       const allVideoFormats = [...combinedFormats, ...videoOnlyFormats];
 
       if (allVideoFormats.length > 0) {
-        // Sort by height descending, then by whether it has audio
-        allVideoFormats.sort((a: any, b: any) => {
-          if (b.height !== a.height) return (b.height || 0) - (a.height || 0);
-          const aHasAudio = a.acodec !== 'none' ? 1 : 0;
-          const bHasAudio = b.acodec !== 'none' ? 1 : 0;
-          return bHasAudio - aHasAudio; // Yang punya audio didahulukan
-        });
-        
-        // Take unique heights >= 144p
-        const seenHeights = new Set();
+        const seenQualities = new Set();
         for (const f of allVideoFormats) {
-          if (!seenHeights.has(f.height) && f.height >= 144) {
-            seenHeights.add(f.height);
-            const hasAudio = f.acodec !== 'none';
-            const qualityLabel = `${f.height}p${hasAudio ? '' : ' (Tanpa Suara)'}`;
-            const sizeStr = formatBytes(f.filesize || f.filesize_approx || 0);
-            media.push({ type: 'video', quality: qualityLabel, url: f.url, size: sizeStr });
+          const qualityLabel = f.qualityLabel || (f.height ? `${f.height}p` : '');
+          if (qualityLabel && !seenQualities.has(qualityLabel)) {
+            seenQualities.add(qualityLabel);
+            const hasAudio = f.hasAudio;
+            const label = `${qualityLabel}${hasAudio ? '' : ' (Tanpa Suara)'}`;
+            const sizeStr = formatBytes(parseInt(f.contentLength || f.filesize || 0));
+            media.push({ type: 'video', quality: label, url: f.url, size: sizeStr });
           }
           if (media.length >= 8) break;
         }
-      } else {
-         // Fallback if no combined formats
-         if (ytData.url) {
-            media.push({ type: 'video', quality: 'Best', url: ytData.url });
-         }
       }
 
       // Audio only
-      const audioFormats = formats.filter((f: any) => f.vcodec === 'none' && f.acodec !== 'none');
+      const audioFormats = formats.filter((f: any) => !f.hasVideo && f.hasAudio);
       if (audioFormats.length > 0) {
-        // Get best audio
         const bestAudio = audioFormats.reduce((prev: any, current: any) => {
-           return (prev.abr || 0) > (current.abr || 0) ? prev : current;
+          return (prev.audioBitrate || 0) > (current.audioBitrate || 0) ? prev : current;
         });
-        const sizeStr = formatBytes(bestAudio.filesize || bestAudio.filesize_approx || 0);
-        media.push({ type: 'audio', quality: `${Math.round(bestAudio.abr || 128)}kbps`, url: bestAudio.url, size: sizeStr });
+        const sizeStr = formatBytes(parseInt(bestAudio.contentLength || bestAudio.filesize || 0));
+        media.push({ type: 'audio', quality: `${bestAudio.audioBitrate || 128}kbps`, url: bestAudio.url, size: sizeStr });
       }
+
+      const thumbnails = videoDetails.thumbnails || [];
+      const bestThumbnail = thumbnails[thumbnails.length - 1]?.url || '';
 
       return NextResponse.json({
         success: true,
         platform: 'youtube',
-        title: ytData.title,
-        thumbnail: ytData.thumbnail,
+        title: videoDetails.title || 'Video YouTube',
+        thumbnail: bestThumbnail,
         media: media
       });
       
@@ -143,6 +126,6 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Download API Error:', error);
     const detail = error.message || String(error);
-    return NextResponse.json({ success: false, error: detail.includes('Sign in') ? 'YouTube memblokir permintaan ini. Harap coba lagi.' : `Terjadi kesalahan: ${detail}` }, { status: 500 });
+    return NextResponse.json({ success: false, error: `Gagal mengekstrak video: ${detail}` }, { status: 500 });
   }
 }
