@@ -91,7 +91,7 @@ export async function POST(request: Request) {
             seenQualities.add(qualityLabel);
             const hasAudio = f.hasAudio;
             const label = `${qualityLabel}${hasAudio ? '' : ' (Tanpa Suara)'}`;
-            const sizeStr = formatBytes(parseInt(f.contentLength || f.filesize || 0));
+            const sizeStr = formatBytes(parseInt((f as any).contentLength || '0'));
             media.push({ type: 'video', quality: label, url: f.url, size: sizeStr });
           }
           if (media.length >= 8) break;
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         const bestAudio = audioFormats.reduce((prev: any, current: any) => {
           return (prev.audioBitrate || 0) > (current.audioBitrate || 0) ? prev : current;
         });
-        const sizeStr = formatBytes(parseInt(bestAudio.contentLength || bestAudio.filesize || 0));
+        const sizeStr = formatBytes(parseInt((bestAudio as any).contentLength || '0'));
         media.push({ type: 'audio', quality: `${bestAudio.audioBitrate || 128}kbps`, url: bestAudio.url, size: sizeStr });
       }
 
