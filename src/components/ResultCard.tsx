@@ -60,8 +60,9 @@ export default function ResultCard({ data }: { data: ResultData }) {
                 const isMuted = item.quality.includes('(Tanpa Suara)');
                 const qualityText = item.quality.replace(' (Tanpa Suara)', '');
                 
+                const ext = item.type === 'audio' ? 'mp3' : item.type === 'image' ? 'jpg' : 'mp4';
                 // Gunakan proxy untuk memaksa download otomatis dan menetapkan nama file
-                const proxyUrl = `/api/proxy?url=${encodeURIComponent(item.url)}&title=${encodeURIComponent(data.title)}&ext=${item.type === 'audio' ? 'mp3' : 'mp4'}`;
+                const proxyUrl = `/api/proxy?url=${encodeURIComponent(item.url)}&title=${encodeURIComponent(data.title)}&ext=${ext}`;
 
                 return (
                   <a
