@@ -38,8 +38,6 @@ export default function ResultCard({ data }: { data: ResultData }) {
             <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider flex items-center gap-1">
               {data.platform === 'youtube' ? (
                 <Icon icon="lucide:youtube" className="text-red-500" />
-              ) : data.platform === 'instagram' ? (
-                <Icon icon="lucide:instagram" className="text-pink-500" />
               ) : (
                 <Icon icon="ic:outline-tiktok" />
               )}

@@ -1,8 +1,32 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
+interface MediaItem {
+  type: string;
+  quality: string;
+  url: string;
+  size?: string;
+}
+
+interface DownloadResult {
+  success: boolean;
+  platform: string;
+  title: string;
+  thumbnail?: string;
+  media: MediaItem[];
+}
+
+interface YouTubeVideoItem {
+  hasAudio?: boolean;
+  height?: number;
+  quality?: string;
+  url: string;
+  size?: number;
+  sizeText?: string;
+}
+
 // Cache sederhana untuk menghindari pemanggilan API berulang yang menyebabkan rate-limiting
-const downloadCache = new Map<string, { data: any; expiry: number }>();
+const downloadCache = new Map<string, { data: DownloadResult; expiry: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
 
 function getCachedResult(url: string) {
@@ -13,7 +37,7 @@ function getCachedResult(url: string) {
   return null;
 }
 
-function setCachedResult(url: string, data: any) {
+function setCachedResult(url: string, data: DownloadResult) {
   downloadCache.set(url, {
     data,
     expiry: Date.now() + CACHE_TTL_MS
@@ -50,7 +74,6 @@ export async function POST(request: Request) {
 
     const isTikTok = url.includes('tiktok.com') || url.includes('vt.tiktok.com');
     const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
-    const isInstagram = url.includes('instagram.com') || url.includes('instagr.am');
 
     if (isTikTok) {
       // Fetch from TikWM API
@@ -129,14 +152,14 @@ export async function POST(request: Request) {
       const rawAudios = data.audios?.items || data.audios || [];
 
       // Urutkan: Format yang ADA SUARA (hasAudio: true) didahulukan ke paling atas
-      rawVideos.sort((a: any, b: any) => {
+      rawVideos.sort((a: YouTubeVideoItem, b: YouTubeVideoItem) => {
         const aAudio = a.hasAudio ? 1 : 0;
         const bAudio = b.hasAudio ? 1 : 0;
         if (bAudio !== aAudio) return bAudio - aAudio;
         return (b.height || 0) - (a.height || 0);
       });
 
-      const media: any[] = [];
+      const media: MediaItem[] = [];
       const seenQualities = new Set();
 
       for (const v of rawVideos) {
@@ -174,70 +197,14 @@ export async function POST(request: Request) {
       };
       setCachedResult(normalizedUrl, result);
       return NextResponse.json(result);
-      
-    } else if (isInstagram) {
-      const cleanUrl = url.split('?')[0];
-
-      try {
-        const response = await axios.get('https://instagram-post-reels-stories-downloader-api.p.rapidapi.com/instagram/', {
-          params: { url: cleanUrl },
-          headers: {
-            'x-rapidapi-key': 'e67e20d88fmshbcee78df6ab9608p16b613jsn8e615f583f81',
-            'x-rapidapi-host': 'instagram-post-reels-stories-downloader-api.p.rapidapi.com'
-          },
-          timeout: 10000
-        });
-
-        const data = response.data;
-        if (data && data.status && Array.isArray(data.result) && data.result.length > 0) {
-          const media: any[] = [];
-          data.result.forEach((item: any, idx: number) => {
-            const isVideo = item.type?.includes('video') || item.url?.includes('.mp4');
-            const mediaType = isVideo ? 'video' : 'image';
-            const label = data.result.length > 1
-              ? `Slide ${idx + 1} (${isVideo ? 'Video' : 'Foto'})`
-              : (isVideo ? 'Reel / Video HD' : 'Foto HD');
-
-            media.push({
-              type: mediaType,
-              quality: label,
-              url: item.url,
-              size: item.size ? formatBytes(parseInt(item.size)) : ''
-            });
-          });
-
-          const thumbnail = data.result[0]?.thumb || data.result[0]?.url || '';
-
-          const result = {
-            success: true,
-            platform: 'instagram',
-            title: 'Media Instagram',
-            thumbnail,
-            media
-          };
-          const hasVideo = media.some(m => m.type === 'video');
-          const isReelUrl = normalizedUrl.includes('/reel/') || normalizedUrl.includes('/reels/') || normalizedUrl.includes('/tv/');
-          if (hasVideo || !isReelUrl) {
-            setCachedResult(normalizedUrl, result);
-          }
-          return NextResponse.json(result);
-        }
-      } catch (e: any) {
-        console.error('RapidAPI Instagram extraction error:', e.message);
-      }
-
-      return NextResponse.json({
-        success: false,
-        error: 'Gagal mengekstrak media Instagram. Tautan mungkin diprivate atau tidak valid.'
-      }, { status: 500 });
-
     } else {
-      return NextResponse.json({ success: false, error: 'Platform tidak didukung. Harap masukkan tautan TikTok, YouTube, atau Instagram.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Platform tidak didukung. Harap masukkan tautan TikTok atau YouTube.' }, { status: 400 });
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Download API Error:', error);
-    const detail = error.response?.data?.message || error.message || String(error);
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    const detail = err.response?.data?.message || err.message || String(error);
     return NextResponse.json({ success: false, error: `Gagal mengekstrak video: ${detail}` }, { status: 500 });
   }
 }

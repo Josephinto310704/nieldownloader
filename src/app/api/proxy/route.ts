@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 
 // Memastikan route ini bisa melakukan streaming file besar tanpa batas waktu default serverless
 export const runtime = 'edge';
@@ -26,8 +25,6 @@ export async function GET(request: Request) {
 
     if (targetUrlObj.hostname.includes('youtube.com') || targetUrlObj.hostname.includes('googlevideo.com') || targetUrlObj.hostname.includes('ytimg.com')) {
       headersInit['Referer'] = 'https://www.youtube.com/';
-    } else if (targetUrlObj.hostname.includes('instagram.com') || targetUrlObj.hostname.includes('cdninstagram.com')) {
-      headersInit['Referer'] = 'https://www.instagram.com/';
     } else {
       headersInit['Referer'] = targetUrlObj.origin;
     }
