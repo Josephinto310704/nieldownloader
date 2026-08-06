@@ -1,6 +1,25 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
+// Cache sederhana untuk menghindari pemanggilan API berulang yang menyebabkan rate-limiting
+const downloadCache = new Map<string, { data: any; expiry: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
+
+function getCachedResult(url: string) {
+  const cached = downloadCache.get(url);
+  if (cached && Date.now() < cached.expiry) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedResult(url: string, data: any) {
+  downloadCache.set(url, {
+    data,
+    expiry: Date.now() + CACHE_TTL_MS
+  });
+}
+
 function formatBytes(bytes: number) {
   if (!bytes || bytes === 0) return '';
   const k = 1024;
@@ -20,6 +39,13 @@ export async function POST(request: Request) {
 
     if (!url) {
       return NextResponse.json({ success: false, error: 'URL tidak boleh kosong' }, { status: 400 });
+    }
+
+    const normalizedUrl = url.trim();
+    const cachedData = getCachedResult(normalizedUrl);
+    if (cachedData) {
+      console.log('Returning cached result for:', normalizedUrl);
+      return NextResponse.json(cachedData);
     }
 
     const isTikTok = url.includes('tiktok.com') || url.includes('vt.tiktok.com');
@@ -61,13 +87,15 @@ export async function POST(request: Request) {
           media.push({ type: 'audio', quality: 'MP3', url: item.music });
         }
 
-        return NextResponse.json({
+        const result = {
           success: true,
           platform: 'tiktok',
           title: item.title || 'Video TikTok',
           thumbnail: item.cover,
           media: media
-        });
+        };
+        setCachedResult(normalizedUrl, result);
+        return NextResponse.json(result);
       } else {
         return NextResponse.json({ success: false, error: 'Gagal mengekstrak video TikTok. Tautan mungkin salah atau video diprivate.' }, { status: 500 });
       }
@@ -137,13 +165,15 @@ export async function POST(request: Request) {
         });
       }
 
-      return NextResponse.json({
+      const result = {
         success: true,
         platform: 'youtube',
         title: title,
         thumbnail: bestThumbnail,
         media: media
-      });
+      };
+      setCachedResult(normalizedUrl, result);
+      return NextResponse.json(result);
       
     } else if (isInstagram) {
       const cleanUrl = url.split('?')[0];
@@ -178,13 +208,19 @@ export async function POST(request: Request) {
 
           const thumbnail = data.result[0]?.thumb || data.result[0]?.url || '';
 
-          return NextResponse.json({
+          const result = {
             success: true,
             platform: 'instagram',
             title: 'Media Instagram',
             thumbnail,
             media
-          });
+          };
+          const hasVideo = media.some(m => m.type === 'video');
+          const isReelUrl = normalizedUrl.includes('/reel/') || normalizedUrl.includes('/reels/') || normalizedUrl.includes('/tv/');
+          if (hasVideo || !isReelUrl) {
+            setCachedResult(normalizedUrl, result);
+          }
+          return NextResponse.json(result);
         }
       } catch (e: any) {
         console.error('RapidAPI Instagram extraction error:', e.message);

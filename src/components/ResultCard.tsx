@@ -18,6 +18,11 @@ export interface ResultData {
 export default function ResultCard({ data }: { data: ResultData }) {
   if (!data || !data.success) return null;
 
+  const isProxiedThumbnail = data.thumbnail && (data.thumbnail.includes('akhmadjonov.uz') || data.thumbnail.includes('cobalt'));
+  const thumbnailUrl = data.thumbnail && data.thumbnail.startsWith('http') && !isProxiedThumbnail
+    ? `/api/proxy?url=${encodeURIComponent(data.thumbnail)}&inline=true`
+    : data.thumbnail;
+
   return (
     <div className="mt-8 w-full max-w-4xl bg-white rounded-2xl shadow-xl ring-1 ring-slate-200 overflow-hidden transform transition-all animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row">
@@ -26,7 +31,7 @@ export default function ResultCard({ data }: { data: ResultData }) {
           <div className="relative w-full md:w-2/5 h-48 sm:h-64 md:h-auto bg-slate-900 group shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
-              src={data.thumbnail} 
+              src={thumbnailUrl} 
               alt={data.title} 
               className="w-full h-full object-cover"
             />

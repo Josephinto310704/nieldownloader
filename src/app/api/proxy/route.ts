@@ -8,6 +8,7 @@ export async function GET(request: Request) {
   const url = searchParams.get('url');
   let title = searchParams.get('title') || 'NielDownloader';
   const ext = searchParams.get('ext') || 'mp4';
+  const isInline = searchParams.get('inline') === 'true';
 
   if (!url) {
     return new Response('URL tidak ditemukan', { status: 400 });
@@ -18,11 +19,21 @@ export async function GET(request: Request) {
     title = title.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 50).trim();
     const filename = `${title}.${ext}`;
 
+    const targetUrlObj = new URL(url);
+    const headersInit: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    };
+
+    if (targetUrlObj.hostname.includes('youtube.com') || targetUrlObj.hostname.includes('googlevideo.com') || targetUrlObj.hostname.includes('ytimg.com')) {
+      headersInit['Referer'] = 'https://www.youtube.com/';
+    } else if (targetUrlObj.hostname.includes('instagram.com') || targetUrlObj.hostname.includes('cdninstagram.com')) {
+      headersInit['Referer'] = 'https://www.instagram.com/';
+    } else {
+      headersInit['Referer'] = targetUrlObj.origin;
+    }
+
     const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Referer': 'https://www.youtube.com/'
-      }
+      headers: headersInit
     });
 
     if (!res.ok) {
@@ -30,8 +41,12 @@ export async function GET(request: Request) {
     }
 
     const headers = new Headers(res.headers);
-    // Memaksa browser untuk langsung mendownload file, bukan memutarnya
-    headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+    if (isInline) {
+      headers.set('Content-Disposition', 'inline');
+    } else {
+      // Memaksa browser untuk langsung mendownload file, bukan memutarnya
+      headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+    }
     
     // Hapus header yang bisa bikin konflik proxy
     headers.delete('content-encoding');
